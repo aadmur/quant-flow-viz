@@ -11,20 +11,27 @@ export function Sparkline({
   height = 34,
   fill = true,
   strokeWidth = 1.4,
+  grow = false,
+  markers,
 }: {
   values: number[];
   color?: string;
   height?: number;
   fill?: boolean;
   strokeWidth?: number;
+  /** true 时纵向填满父容器（父级需有确定高度） */
+  grow?: boolean;
+  /** 参考线（如阈值），会纳入纵轴取值范围 */
+  markers?: { value: number; color: string }[];
 }) {
   const id = useId().replace(/:/g, '');
-  if (values.length < 2) return <div style={{ height }} />;
+  const H = grow ? 60 : height;
+  if (values.length < 2) return <div style={{ height: grow ? '100%' : height }} />;
 
   const W = 120;
-  const H = height;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const refs = markers?.map((m) => m.value) ?? [];
+  const min = Math.min(...values, ...refs);
+  const max = Math.max(...values, ...refs);
   const span = max - min || 1;
   const x = (i: number) => (i / (values.length - 1)) * W;
   const y = (v: number) => H - 3 - ((v - min) / span) * (H - 6);
@@ -33,15 +40,44 @@ export function Sparkline({
   const area = `${line} L${W},${H} L0,${H} Z`;
 
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} height={H} preserveAspectRatio="none" aria-hidden>
+    <svg
+      className="chart"
+      viewBox={`0 0 ${W} ${H}`}
+      height={grow ? '100%' : H}
+      preserveAspectRatio="none"
+      style={grow ? { height: '100%', display: 'block' } : undefined}
+      aria-hidden
+    >
       <defs>
         <linearGradient id={`sp-${id}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.22" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
+      {markers?.map((m, i) => (
+        <line
+          key={i}
+          x1={0}
+          x2={W}
+          y1={y(m.value)}
+          y2={y(m.value)}
+          stroke={m.color}
+          strokeWidth={0.7}
+          strokeDasharray="2 2"
+          opacity={0.75}
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
       {fill && <path d={area} fill={`url(#sp-${id})`} />}
-      <path d={line} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d={line}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }

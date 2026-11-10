@@ -77,11 +77,12 @@ export function ModelPanel() {
         })}
       </div>
 
-      <div>
+      <div className="col" style={{ flex: 1, minHeight: 84, gap: 0 }}>
         <div className="row-between tiny muted" style={{ marginBottom: 2 }}>
           <span>综合分轨迹（近 80 tick）</span>
           <span>
-            越过 ±{d.threshold.toFixed(2)} 即开仓 · 已翻转 <b className="num">{snap.metrics.decisionFlips}</b> 次
+            虚线 = ±{d.threshold.toFixed(2)} 开仓阈值 · 已翻转{' '}
+            <b className="num">{snap.metrics.decisionFlips}</b> 次
           </span>
         </div>
         <ScoreTrace />
@@ -110,34 +111,17 @@ function ScoreTrace() {
   const th = snap.decision.threshold;
 
   return (
-    <div style={{ position: 'relative' }}>
-      <Sparkline values={scores} color="var(--m2)" height={42} strokeWidth={1.3} />
-      <div
-        className="tiny num"
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: `calc(${50 + th * 50}% - 8px)`,
-          color: 'var(--up)',
-          opacity: 0.65,
-          fontSize: 8.5,
-        }}
-      >
-        +{th.toFixed(2)}
-      </div>
-      <div
-        className="tiny num"
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: `calc(${50 - th * 50}% - 8px)`,
-          color: 'var(--down)',
-          opacity: 0.65,
-          fontSize: 8.5,
-        }}
-      >
-        −{th.toFixed(2)}
-      </div>
+    <div style={{ position: 'relative', flex: 1, minHeight: 84 }}>
+      <Sparkline
+        values={scores}
+        color="var(--m2)"
+        grow
+        strokeWidth={1.3}
+        markers={[
+          { value: th, color: 'var(--up)' },
+          { value: -th, color: 'var(--down)' },
+        ]}
+      />
     </div>
   );
 }

@@ -111,7 +111,7 @@ export function MarketPanel() {
         baselinePrices={session.baselinePrices}
         fills={visibleFills}
         tick={snap.tick}
-        height={150}
+        height={132}
       />
 
       <div className="chart-legend">

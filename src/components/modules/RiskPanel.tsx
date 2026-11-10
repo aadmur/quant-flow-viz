@@ -14,6 +14,11 @@ export function RiskPanel() {
   const openDetail = useSession((s) => s.openDetail);
   const r = snap.risk;
 
+  // 被闸门拦下或告警的子单（最新 3 条），体现「风控在上游」
+  const riskActions = (snap.parent?.children ?? [])
+    .filter((c) => c.riskVerdict !== 'pass')
+    .slice(-3);
+
   const gates = [
     {
       name: '单票敞口',
@@ -106,7 +111,70 @@ export function RiskPanel() {
         />
       </div>
 
-      <div className="tiny muted" style={{ lineHeight: 1.55 }}>
+      <div className="col" style={{ gap: 4 }}>
+        <div className="row-between tiny muted">
+          <span>敞口构成</span>
+          <span>占组合权重</span>
+        </div>
+        {snap.positions.map((p) => (
+          <div className="row" key={p.symbol} style={{ gap: 6, alignItems: 'center' }}>
+            <span className="tiny" style={{ width: 50, flexShrink: 0, color: 'var(--text-2)' }}>
+              {p.name}
+            </span>
+            <div className="meter" style={{ flex: 1 }}>
+              <i
+                style={{
+                  width: `${(p.weight / Math.max(...snap.positions.map((x) => x.weight), 0.001)) * 100}%`,
+                  background: 'var(--e1)',
+                }}
+              />
+            </div>
+            <span className="tiny num" style={{ width: 38, textAlign: 'right' }}>
+              {(p.weight * 100).toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="col" style={{ gap: 3 }}>
+        <div className="row-between tiny muted">
+          <span>最近风控动作</span>
+          <span>
+            告警 {r.warned} · 拦截 {r.blocked}
+          </span>
+        </div>
+        {riskActions.length === 0 ? (
+          <div className="tiny muted">暂无告警或拦截记录</div>
+        ) : (
+          riskActions.map((c) => (
+            <div className="row" key={c.id} style={{ gap: 6, alignItems: 'center' }}>
+              <span
+                className="tiny"
+                style={{
+                  color: c.riskVerdict === 'block' ? 'var(--neg)' : 'var(--warn)',
+                  fontWeight: 600,
+                  width: 26,
+                  flexShrink: 0,
+                }}
+              >
+                {c.riskVerdict === 'block' ? '拦截' : '告警'}
+              </span>
+              <span className="tiny num" style={{ flexShrink: 0 }}>
+                {c.id}
+              </span>
+              <span
+                className="tiny muted"
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                title={c.rejectReason ?? '接近风控阈值'}
+              >
+                {c.rejectReason ?? '接近风控阈值'}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="tiny muted" style={{ lineHeight: 1.55, marginTop: 'auto' }}>
         风控位于链路<b>上游</b>：子单下发前先过闸门，被拦截的委托根本不会进入撮合，
         因此会直接表现为成交率下降与机会成本上升。
       </div>

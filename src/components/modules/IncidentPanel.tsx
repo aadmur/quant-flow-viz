@@ -22,7 +22,7 @@ export function IncidentPanel() {
 
   const log = session.incidents
     .filter((i) => i.tick <= snap.tick)
-    .slice(-6)
+    .slice(-12)
     .reverse();
 
   const active = snap.activeIncidents;
@@ -51,7 +51,16 @@ export function IncidentPanel() {
         </div>
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 12, alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.1fr 1fr',
+          gap: 12,
+          alignItems: 'stretch',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         <div className="col" style={{ gap: 8 }}>
           <div className="incident-actions">
             {INJECTABLE.map((i) => (
@@ -96,11 +105,11 @@ export function IncidentPanel() {
           )}
         </div>
 
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div className="tiny muted" style={{ marginBottom: 4 }}>
             异常事件流（含处置动作）
           </div>
-          <div className="incident-list">
+          <div className="incident-list" style={{ flex: 1, minHeight: 202, overflowY: 'auto' }}>
             {log.length === 0 ? (
               <Empty>暂未发生异常</Empty>
             ) : (

@@ -350,7 +350,7 @@
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 34px;
+  height: 46px;
   padding: 0 1px;
 }
 .slice-bar {
@@ -430,14 +430,15 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 130px;
+  flex: 1;
+  min-height: 60px;
   overflow-y: auto;
   font-family: var(--font-mono);
   font-size: 10.5px;
 }
 .fill-row {
   display: grid;
-  grid-template-columns: 30px 1fr 44px 46px;
+  grid-template-columns: 26px auto 1fr 46px;
   gap: 5px;
   padding: 2px 5px;
   border-radius: 2px;

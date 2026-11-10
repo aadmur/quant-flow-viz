@@ -118,8 +118,8 @@ export function ExecutionPanel() {
         )}
       </div>
 
-      <div>
-        <div className="tiny muted" style={{ marginBottom: 3 }}>
+      <div className="col" style={{ flex: 1, minHeight: 0, gap: 3, overflow: 'hidden' }}>
+        <div className="tiny muted">
           成交回报流（成交量加权，bp 为相对成交时中间价）
         </div>
         <div className="fill-feed">
@@ -127,7 +127,7 @@ export function ExecutionPanel() {
             <Empty>等待成交……</Empty>
           ) : (
             [...visibleFills]
-              .slice(-7)
+              .slice(-16)
               .reverse()
               .map((f) => (
                 <div className="fill-row" key={f.id}>
