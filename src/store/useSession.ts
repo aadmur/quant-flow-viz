@@ -195,7 +195,9 @@ export function currentSnapshot(state: SessionStore) {
 /** 播放推进：由 rAF 循环调用 */
 export function advance(state: SessionStore, dtMs: number): number {
   const tps = TICKS_PER_SECOND * state.speed;
-  const next = state.tick + (dtMs / 1000) * tps;
+  // 首帧的 rAF 时间戳可能早于调度前取的 performance.now()，dt 会是负值。
+  // 不夹住的话 tick 会退到 0 以下，时间轴就会画出负宽度的矩形。
+  const next = state.tick + (Math.max(0, dtMs) / 1000) * tps;
   if (next >= state.session.totalTicks - 1) return state.session.totalTicks - 1;
-  return next;
+  return Math.max(0, next);
 }

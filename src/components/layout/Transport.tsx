@@ -23,7 +23,11 @@ export function Transport() {
   const total = session.totalTicks;
   const snap = useSnap();
 
-  const posOf = useCallback((t: number) => (t / (total - 1)) * W, [total]);
+  // 夹住上下界：SVG 的 width 不接受负值，一旦 tick 越界就会在控制台报错
+  const posOf = useCallback(
+    (t: number) => Math.max(0, Math.min(W, (t / (total - 1)) * W)),
+    [total],
+  );
 
   const seekFromEvent = useCallback(
     (clientX: number) => {

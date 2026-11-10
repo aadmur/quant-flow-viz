@@ -31,7 +31,7 @@ function usePlayback() {
     let last = performance.now();
 
     const loop = (now: number) => {
-      const dt = Math.min(120, now - last);
+      const dt = Math.max(0, Math.min(120, now - last));
       last = now;
       const st = useSession.getState();
       const next = advance(st, dt);

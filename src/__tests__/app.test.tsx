@@ -209,3 +209,33 @@ describe('手动下单', () => {
     expect(snap.parent?.createdTick).toBe(200);
   });
 });
+
+describe('播放推进的边界', () => {
+  it('dt 为负或 tick 越界时不会把 tick 推出 [0, total-1]', async () => {
+    const { advance } = await import('../store/useSession');
+    const st = useSession.getState();
+    const total = st.session.totalTicks;
+
+    useSession.setState({ tick: 0 });
+    expect(advance(useSession.getState(), -16.7)).toBe(0);
+
+    useSession.setState({ tick: total - 1 });
+    expect(advance(useSession.getState(), 1000)).toBe(total - 1);
+
+    useSession.setState({ tick: 100 });
+    const next = advance(useSession.getState(), 40);
+    expect(next).toBeGreaterThanOrEqual(0);
+    expect(next).toBeLessThan(total);
+  });
+
+  it('时间轴不会渲染出负宽度（SVG 会因此在控制台报错）', () => {
+    render(<App />);
+    act(() => {
+      useSession.getState().setTick(0);
+    });
+    for (const rect of document.querySelectorAll('rect')) {
+      const w = rect.getAttribute('width');
+      if (w !== null) expect(Number(w)).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
