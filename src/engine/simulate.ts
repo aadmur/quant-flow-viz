@@ -613,7 +613,11 @@ export function simulateSession(options: SimulateOptions): SessionData {
       anomaliesNow: newAnomalies,
       anomalyCount: anomalies.length,
       decision,
-      parent,
+      // 母单每 tick 都在原地变化（子单状态、成交量），快照必须存副本：
+      // 否则拖时间轴回到过去时，看到的是这单最终的样子
+      parent: parent
+        ? { ...parent, children: parent.children.map((c) => ({ ...c })) }
+        : null,
       fillCount: fills.length,
       execution: execStats,
       impact: {
@@ -624,6 +628,8 @@ export function simulateSession(options: SimulateOptions): SessionData {
         counterfactualPrice: path.baseline[t],
         costYuan: Number(impact.costYuan.toFixed(0)),
         avgCostBps: Number(impact.avgCostBps().toFixed(2)),
+        marginalPermanentBps: Number(impact.marginalPermanentBps().toFixed(2)),
+        oneShotCostBps: Number(impact.oneShotCostBps(parent?.targetQty ?? 0).toFixed(2)),
         curve: [...impact.curve],
       },
       positions,
