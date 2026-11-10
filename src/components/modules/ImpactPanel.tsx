@@ -1,6 +1,4 @@
 import { fmtMoney, fmtSigned } from '../../core/format';
-import { oneShotImpactBps, TEMP_MULTIPLIER } from '../../model/impact';
-import { FOCUS_SYMBOL } from '../../model/params';
 import { useSnap } from '../../store/selectors';
 import { useSession } from '../../store/useSession';
 import { ImpactCurve } from '../charts/Charts';
@@ -9,20 +7,17 @@ import { Stat } from '../ui/Controls';
 
 export function ImpactPanel() {
   const snap = useSnap();
-  const params = useSession((s) => s.params);
   const openDetail = useSession((s) => s.openDetail);
 
   const im = snap.impact;
-  const total = Math.max(im.permanentBps + im.temporaryBps, 0.001);
-  const permPct = (im.permanentBps / total) * 100;
+  const total = Math.max(im.marginalPermanentBps + im.temporaryBps, 0.001);
+  const permPct = (im.marginalPermanentBps / total) * 100;
   const tempPct = (im.temporaryBps / total) * 100;
 
   const deviation = ((snap.price - im.counterfactualPrice) / im.counterfactualPrice) * 10000;
   const targetQty = snap.parent?.targetQty ?? 0;
-  // 一次性砸盘：全部委托量都在冲击峰值（永久 + 临时）上成交
-  const oneShotCost =
-    oneShotImpactBps(targetQty, params.impactCoeff, FOCUS_SYMBOL.vol * params.marketVol) *
-    (1 + TEMP_MULTIPLIER);
+  // 一次性砸盘与拆单实付严格同口径：同起点、只算本单增量，差别只在成交节奏
+  const oneShotCost = im.oneShotCostBps;
   const saving = oneShotCost - im.avgCostBps;
 
   return (
@@ -52,8 +47,8 @@ export function ImpactPanel() {
           <div className="stat-grid c3">
             <Stat
               label="永久冲击"
-              value={`${im.permanentBps.toFixed(1)}`}
-              hint="bp · 不可回撤"
+              value={`${im.marginalPermanentBps.toFixed(1)}`}
+              hint={`bp · 本单 · 累计 ${im.permanentBps.toFixed(1)}`}
               color="var(--m5)"
             />
             <Stat
@@ -85,13 +80,13 @@ export function ImpactPanel() {
 
           <div className="col" style={{ gap: 4 }}>
             <div className="row-between small">
-              <span className="muted">一次性砸盘（{targetQty} 股）单位成本</span>
+              <span className="muted">反事实 · 一次性砸盘 {targetQty} 股</span>
               <span className="num" style={{ color: 'var(--neg)' }}>
                 {oneShotCost.toFixed(1)}bp
               </span>
             </div>
             <div className="row-between small">
-              <span className="muted">拆单实际单位成本</span>
+              <span className="muted">实际 · 拆单已成交单位成本</span>
               <span className="num" style={{ color: 'var(--m5)' }}>
                 {im.avgCostBps.toFixed(1)}bp
               </span>
@@ -103,8 +98,9 @@ export function ImpactPanel() {
               </span>
             </div>
             <div className="tiny muted" style={{ lineHeight: 1.5 }}>
-              永久冲击只取决于总量，拆单真正省下的是<b>临时冲击</b>：
-              一次性成交时全部委托量都压在冲击峰值上，拆开后每笔都在衰减后的水平成交。
+              两组数字同起点、同口径，只差成交节奏。永久冲击只取决于总量，
+              拆单真正省下的是<b>临时冲击</b>：一次性成交把全部委托量压在冲击峰值上，
+              拆开后每笔都在衰减后的水平成交。
             </div>
           </div>
         </div>

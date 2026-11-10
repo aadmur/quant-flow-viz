@@ -224,6 +224,10 @@ export interface ImpactState {
   costYuan: number;
   /** 当前母单的冲击成本（单位成交金额的 bp），可与一次性砸盘直接对比 */
   avgCostBps: number;
+  /** 当前母单自身产生的永久冲击增量（已扣除母单开始前的存量） */
+  marginalPermanentBps: number;
+  /** 反事实：同等数量一次性砸盘的单笔成本（bp），与 avgCostBps 同口径 */
+  oneShotCostBps: number;
   /** 当 tick 冲击曲线（用于绘制衰减轨迹），最近 60 点 */
   curve: number[];
 }

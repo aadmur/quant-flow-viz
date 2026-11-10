@@ -3,7 +3,6 @@ import { PHASE_MAP } from '../../core/phases';
 import { fmtBps, fmtMoney, fmtSigned } from '../../core/format';
 import { ANOMALY_META } from '../../model/anomaly';
 import { ALGO_HINTS, ALGO_LABELS, FOCUS_SYMBOL } from '../../model/params';
-import { oneShotImpactBps } from '../../model/impact';
 import { useSnap, useSessionData } from '../../store/selectors';
 import { useSession } from '../../store/useSession';
 import { Heatmap, ImpactCurve, PriceChart } from '../charts/Charts';
@@ -343,16 +342,11 @@ export function DetailDrawer() {
   function M5Detail() {
     const im = snap.impact;
     const params = useSession.getState().params;
-    const oneShot = oneShotImpactBps(
-      snap.parent?.targetQty ?? 0,
-      params.impactCoeff,
-      FOCUS_SYMBOL.vol * params.marketVol,
-    );
     return (
       <>
         <Section title="冲击分解">
           <div className="stat-grid c3">
-            <Stat label="永久" value={`${im.permanentBps.toFixed(2)}bp`} color="var(--m5)" />
+            <Stat label="永久（本单）" value={`${im.marginalPermanentBps.toFixed(2)}bp`} color="var(--m5)" />
             <Stat label="临时" value={`${im.temporaryBps.toFixed(2)}bp`} color="var(--warn)" />
             <Stat label="成本" value={fmtMoney(im.costYuan)} color="var(--neg)" />
           </div>
@@ -372,14 +366,15 @@ export function DetailDrawer() {
             <dd>{im.depthConsumed} 股</dd>
             <dt>ADV</dt>
             <dd>300 万股</dd>
-            <dt>一次性砸盘估计</dt>
-            <dd style={{ color: 'var(--neg)' }}>{oneShot.toFixed(1)}bp</dd>
-            <dt>拆单实际永久冲击</dt>
-            <dd style={{ color: 'var(--m5)' }}>{im.permanentBps.toFixed(1)}bp</dd>
+            <dt>反事实 · 一次性砸盘</dt>
+            <dd style={{ color: 'var(--neg)' }}>{im.oneShotCostBps.toFixed(1)}bp</dd>
+            <dt>实际 · 拆单单位成本</dt>
+            <dd style={{ color: 'var(--m5)' }}>{im.avgCostBps.toFixed(1)}bp</dd>
           </dl>
           <div className="tiny muted" style={{ lineHeight: 1.6 }}>
-            冲击对<b>累积成交量</b>取平方根，因此拆单的收益是次线性的：
-            分成 19 笔执行时，总冲击约为一次性砸盘的 1/√19。这就是算法交易存在的根本理由。
+            冲击对<b>累积成交量</b>取平方根：同样一笔量，无论切几刀，走完之后的永久冲击都相同。
+            拆单真正改变的是<b>临时冲击</b>与<b>成交均价</b>——一次性成交要把全部委托量压在冲击峰值上，
+            拆开后每笔都在峰值衰减后的水平成交。所以省下的是临时冲击，不是永久冲击。
           </div>
         </Section>
 
