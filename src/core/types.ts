@@ -220,8 +220,10 @@ export interface ImpactState {
   depthConsumed: number;
   /** 反事实价格：假如我们没下单，价格会是多少 */
   counterfactualPrice: number;
-  /** 我方成交对价格的贡献（元） */
+  /** 当前母单的冲击成本（元） */
   costYuan: number;
+  /** 当前母单的冲击成本（单位成交金额的 bp），可与一次性砸盘直接对比 */
+  avgCostBps: number;
   /** 当 tick 冲击曲线（用于绘制衰减轨迹），最近 60 点 */
   curve: number[];
 }
@@ -380,6 +382,8 @@ export interface SessionData {
   incidents: Incident[];
   /** 每 tick 的「无我方交易」价格轨迹，用于冲击反事实对比 */
   baselinePrices: number[];
+  /** 每 tick 的账户权益，供权益曲线使用（真实值，非插值） */
+  equityCurve: number[];
   /** 摘要：一次会话的最终结论 */
   summary: {
     totalPnl: number;

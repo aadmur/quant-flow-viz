@@ -336,6 +336,7 @@ export function simulateSession(options: SimulateOptions): SessionData {
         worstSlippage = -Infinity;
         partialCount = 0;
         cancelCount = 0;
+        impact.resetCost();
       }
     }
 
@@ -622,6 +623,7 @@ export function simulateSession(options: SimulateOptions): SessionData {
         depthConsumed: impact.cumulativeQty,
         counterfactualPrice: path.baseline[t],
         costYuan: Number(impact.costYuan.toFixed(0)),
+        avgCostBps: Number(impact.avgCostBps().toFixed(2)),
         curve: [...impact.curve],
       },
       positions,
@@ -665,6 +667,7 @@ export function simulateSession(options: SimulateOptions): SessionData {
     anomalies,
     incidents,
     baselinePrices: path.baseline,
+    equityCurve: equityHistory,
     summary: {
       totalPnl: Number(totalPnl.toFixed(2)),
       totalSlippageBps: Number((last.execution.avgSlippageBps ?? 0).toFixed(2)),

@@ -3,7 +3,7 @@ import { ADV_SHARES } from './params';
 /** 临时冲击的衰减时间常数（tick）。越大回撤越慢 */
 export const TEMP_DECAY_TAU = 9.5;
 /** 临时冲击相对永久冲击的放大倍数 */
-const TEMP_MULTIPLIER = 1.45;
+export const TEMP_MULTIPLIER = 1.45;
 
 /**
  * 市场冲击模型（平方根律）。
@@ -23,8 +23,10 @@ export class ImpactModel {
   cumulativeQty = 0;
   /** 冲击曲线（最近 N 个 tick 的 totalBps） */
   curve: number[] = [];
-  /** 冲击造成的额外成本（元） */
+  /** 冲击造成的额外成本（元）——按当前母单累计 */
   costYuan = 0;
+  /** 当前母单的成交金额，用于把成本换算成单位 bp */
+  notional = 0;
 
   private coeff: number;
   private sigma: number;
@@ -55,10 +57,24 @@ export class ImpactModel {
     this.permanentBps = after;
     this.temporaryBps += delta * TEMP_MULTIPLIER;
 
-    // 额外成本 = 成交金额 × 冲击比例（用当前中间价近似）
-    this.costYuan += qty * midPrice * ((this.permanentBps + this.temporaryBps) / 10000) * 0.5;
+    // 该笔成交是在「当时的冲击峰值」上成交的，多付的钱就是成本
+    const amount = qty * midPrice;
+    this.notional += amount;
+    this.costYuan += amount * ((this.permanentBps + this.temporaryBps) / 10000);
 
     return delta;
+  }
+
+  /** 当前母单的冲击成本（单位成交金额的 bp）——可与「一次性砸盘」公平对比 */
+  avgCostBps(): number {
+    if (this.notional <= 0) return 0;
+    return (this.costYuan / this.notional) * 10000;
+  }
+
+  /** 新母单开始时清空成本口径，避免跨母单混算 */
+  resetCost(): void {
+    this.costYuan = 0;
+    this.notional = 0;
   }
 
   /** 每 tick 调用一次：临时冲击衰减 */
