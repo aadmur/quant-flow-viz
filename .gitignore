@@ -11,3 +11,6 @@ coverage
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# 截图产物（scripts/shot*.py 生成，不入库）
+shots
