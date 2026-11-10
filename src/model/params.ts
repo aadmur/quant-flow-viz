@@ -215,6 +215,14 @@ export const ALGO_HINTS: Record<AlgoKind, string> = {
   sniper: '穿价主动吃单，成交快但滑点最高',
 };
 
+/** 极简标签，用于按钮等空间紧张处 */
+export const ALGO_SHORT: Record<AlgoKind, string> = {
+  twap: '等间隔',
+  vwap: '量价加权',
+  iceberg: '隐蔽补单',
+  sniper: '穿价主动',
+};
+
 export interface Preset {
   id: string;
   name: string;
