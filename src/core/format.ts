@@ -8,6 +8,9 @@ export function fmtPrice(v: number, digits = 2): string {
 
 export function fmtSigned(v: number, digits = 2): string {
   const s = v.toFixed(digits);
+  // 四舍五入后为 0 时不要带符号，避免出现「-0.0」
+  const zero = Number(s) === 0;
+  if (zero) return (0).toFixed(digits);
   return v > 0 ? `+${s}` : s;
 }
 
