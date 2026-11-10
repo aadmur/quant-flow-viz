@@ -83,6 +83,19 @@ describe('仿真引擎 · 全链路确实串联', () => {
     }
   });
 
+  it('快照不泄漏未来：母单成交进度与历史 tick 严格对齐', () => {
+    // 母单对象在仿真过程中被原地修改，若快照直接持有引用，
+    // 拖时间轴回到过去就会看到这单最终的样子——这里守住副本语义。
+    for (const s of session.snaps) {
+      if (!s.parent) continue;
+      const soFar = session.fills.filter((f) => f.parentId === s.parent!.id && f.tick <= s.tick);
+      const qty = soFar.reduce((a, f) => a + f.qty, 0);
+      expect(Math.abs(s.parent.filledQty - qty), `tick ${s.tick} 母单成交量`).toBeLessThan(1e-6);
+      const childSum = s.parent.children.reduce((a, c) => a + c.filled, 0);
+      expect(Math.abs(childSum - qty), `tick ${s.tick} 子单成交量之和`).toBeLessThan(1e-6);
+    }
+  });
+
   it('滑点分解严格闭合：total = delay + marketDrift + execution + opportunity', () => {
     const last = session.snaps[session.snaps.length - 1];
     const sp = last.review.slippage;
@@ -101,6 +114,69 @@ describe('仿真引擎 · 全链路确实串联', () => {
       ((last.price - last.impact.counterfactualPrice) / last.impact.counterfactualPrice) * 10000;
     expect(Math.abs(devBps)).toBeGreaterThan(0);
     expect(Math.abs(devBps)).toBeLessThan(120);
+  });
+});
+
+describe('仿真引擎 · 冲击成本口径', () => {
+  type Snap = (typeof session.snaps)[number];
+
+  /** 每个母单「已结束且有成交」的最后一个快照 */
+  const settled = (): Map<string, Snap> => {
+    const m = new Map<string, Snap>();
+    for (const s of session.snaps) {
+      if (s.parent && s.parent.status === 'done') m.set(s.parent.id, s);
+    }
+    return m;
+  };
+
+  it('本单永久冲击增量不超过累计存量', () => {
+    for (const s of session.snaps) {
+      expect(s.impact.marginalPermanentBps).toBeLessThanOrEqual(s.impact.permanentBps + 1e-6);
+    }
+  });
+
+  it('拆单单位成本严格低于同口径的一次性砸盘', () => {
+    const done = settled();
+    expect(done.size).toBeGreaterThanOrEqual(2);
+    for (const [id, s] of done) {
+      expect(s.impact.oneShotCostBps, `母单 ${id} 缺少反事实估计`).toBeGreaterThan(0);
+      const saving = s.impact.oneShotCostBps - s.impact.avgCostBps;
+      expect(saving, `母单 ${id} 的拆单节省不应为负`).toBeGreaterThan(0);
+      // 节省幅度不应荒谬：永久冲击只取决于总量，理论上限是一次性方案的临时部分
+      expect(saving).toBeLessThan(80);
+    }
+  });
+
+  it('成本按母单隔离：新母单不背负上一单的成本', () => {
+    // 逐母单收集：创建时刻的 costYuan 只应包含本单刚成交的部分
+    const createdAt = new Map<string, number>();
+    const settledCost = new Map<string, number>();
+    for (const s of session.snaps) {
+      if (!s.parent) continue;
+      const id = s.parent.id;
+      if (!createdAt.has(id)) createdAt.set(id, s.impact.costYuan);
+      settledCost.set(id, s.impact.costYuan);
+    }
+    // 同一母单内成本单调累积
+    for (const s of session.snaps) {
+      if (!s.parent) continue;
+      expect(s.impact.costYuan).toBeGreaterThanOrEqual(createdAt.get(s.parent.id)! - 1e-6);
+    }
+    // 后一单的起点成本必须低于前一单的收尾成本（否则说明发生了跨单继承）
+    const order = [...createdAt.keys()].filter((id) => settledCost.get(id)! > 0);
+    expect(order.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < order.length; i++) {
+      const prev = settledCost.get(order[i - 1])!;
+      const start = createdAt.get(order[i])!;
+      expect(start, `母单 ${order[i]} 起点成本 ${start} 不应超过上一单 ${order[i - 1]} 的 ${prev}`).toBeLessThan(prev);
+    }
+  });
+
+  it('已结束母单的单位成本都落在业务合理区间', () => {
+    for (const [, s] of settled()) {
+      expect(s.impact.avgCostBps).toBeGreaterThan(0);
+      expect(s.impact.avgCostBps).toBeLessThan(60);
+    }
   });
 });
 
