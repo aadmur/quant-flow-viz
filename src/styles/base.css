@@ -1,0 +1,149 @@
+/* 基础重置 + 全局质感（网格、暗角、扫描线） */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-family: var(--f-ui);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* 车间地面：极暗的径向光 + 1px 蓝图网格 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 700px at 42% 6%, rgba(56, 225, 255, 0.075), transparent 62%),
+    radial-gradient(900px 620px at 78% 96%, rgba(255, 176, 32, 0.05), transparent 58%),
+    radial-gradient(1400px 900px at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(to right, rgba(86, 116, 148, 0.055) 1px, transparent 1px) 0 0 / 46px 46px,
+    linear-gradient(to bottom, rgba(86, 116, 148, 0.055) 1px, transparent 1px) 0 0 / 46px 46px;
+  z-index: 0;
+}
+
+/* 极细扫描线，给暗部一点「仪器」味 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.016) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: screen;
+  z-index: 1;
+}
+
+#root {
+  position: relative;
+  z-index: 2;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--track-a, var(--line-2)) 0 var(--fill, 50%), #1a222d var(--fill, 50%) 100%);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--thumb, #cfe3f5);
+  box-shadow: 0 0 0 1px #0a0e14, 0 0 10px -1px var(--thumb-glow, rgba(160, 210, 255, 0.8));
+}
+
+input[type='range']::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: #1a222d;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: none;
+  border-radius: 50%;
+  background: var(--thumb, #cfe3f5);
+}
+
+::selection {
+  background: rgba(56, 225, 255, 0.28);
+}
+
+.tabnum {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--f-mono);
+}
+
+.mono {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #202a37;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

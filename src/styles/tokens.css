@@ -1,0 +1,80 @@
+/* ============================================================
+   设计令牌 —— 「机加工车间」视觉基调
+   深色金属 + 单一冷光信号色，数据用暖色，风险用红。
+   零件的三个可见面固定用 m-top / m-left / m-right 三档明度，
+   保证任何新零件拼进来都落在同一套光照关系里。
+   ============================================================ */
+
+:root {
+  /* 背景层次 */
+  --bg-0: #05070b;
+  --bg-1: #090d13;
+  --bg-2: #0e141d;
+  --panel: rgba(17, 23, 32, 0.82);
+  --panel-solid: #121821;
+  --panel-hi: rgba(30, 40, 54, 0.72);
+
+  /* 描边 */
+  --line: #1b2431;
+  --line-2: #26313f;
+  --line-3: #34415280;
+
+  /* 文本 */
+  --text-1: #e9eff8;
+  --text-2: #93a2b6;
+  --text-3: #5c6b7e;
+  --text-4: #3d4959;
+
+  /* 金属三面 */
+  --m-top: #33404f;
+  --m-left: #171f29;
+  --m-right: #232e3c;
+  --m-edge: #4b5c72;
+  --m-edge-hi: #6c8099;
+
+  /* 语义色：A 股习惯，红涨绿跌 */
+  --up: #ff4d63;
+  --down: #17cf8d;
+  --pos: #17cf8d;
+  --neg: #ff4d63;
+  --warn: #ffc247;
+  --risk: #ff3b4e;
+  --neutral: #8fa3bb;
+
+  /* 阶段光色 */
+  --c-m1: #38e1ff;
+  --c-m2: #a78bfa;
+  --c-m3: #ffb020;
+  --c-m4: #2dd4bf;
+  --c-m5: #fb7a3c;
+  --c-m6: #f472b6;
+  --c-e1: #ff3b4e;
+  --c-e2: #34d399;
+  --c-e3: #ffc247;
+
+  /* 尺寸 */
+  --r-s: 4px;
+  --r-m: 7px;
+  --r-l: 11px;
+  --rail-w: 240px;
+  --detail-w: 376px;
+  --topbar-h: 58px;
+  --timeline-h: 126px;
+
+  /* 阴影 */
+  --sh-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --sh-2: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  --sh-glow: 0 0 24px -4px currentColor;
+
+  /* 字体 */
+  --f-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+  --f-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', system-ui, sans-serif;
+
+  /* 动效 */
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 140ms;
+  --t-mid: 260ms;
+  --t-slow: 460ms;
+}
