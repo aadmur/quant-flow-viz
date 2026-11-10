@@ -24,7 +24,7 @@ export function fmtMoney(v: number, digits = 2): string {
   const abs = Math.abs(v);
   if (abs >= 1e8) return `${(v / 1e8).toFixed(digits)}亿`;
   if (abs >= 1e4) return `${(v / 1e4).toFixed(digits)}万`;
-  return v.toFixed(0);
+  return `${Math.round(v)}元`;
 }
 
 export function fmtMoneySigned(v: number, digits = 2): string {
