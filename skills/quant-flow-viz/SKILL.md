@@ -22,7 +22,7 @@ M5 市场冲击 / M6 策略复盘 + E1 风控 / E2 组合 / E3 异常）由同�
 | react / react-dom | ^19 | 无 UI 框架依赖 |
 | zustand | ^5 | 唯一状态库 |
 | vite | ^7 | `dev` 绑 127.0.0.1:5178 |
-| vitest | ^3 + jsdom + @testing-library/* | 38 条用例 |
+| vitest | ^3 + jsdom + @testing-library/* | 40 条用例 |
 | typescript | ^5.6 | strict，`build` 会先 `tsc --noEmit` |
 | Python（仅截图） | 3.10+，需 `playwright` + `pillow` | 属于验证工具，不影响构建 |
 
@@ -44,7 +44,7 @@ npm run dev                 # http://127.0.0.1:5178
 ```bash
 npm run build               # tsc --noEmit && vite build，产物在 dist/
 npm run preview             # 预览 dist/，默认 4173（端口被占会自动 +1，以输出为准）
-npm test                    # 期望：2 files / 38 tests 全绿，约 6s
+npm test                    # 期望：2 files / 40 tests 全绿，约 7s
 ```
 
 更新日志里的实测数据（改动 UI 后请重新测量，不要照抄）：
@@ -94,7 +94,7 @@ exposureLimitPct: 28  // E1 敞口上限
 按顺序做完再提交，任何一项不过就不要推：
 
 ```bash
-npm test                                    # 38 条全绿
+npm test                                    # 40 条全绿
 npm run build                               # tsc + vite 均无错
 npm run preview                             # 起 preview（默认 4173）
 
@@ -164,6 +164,7 @@ GIT_SSL_NO_VERIFY=1 GIT_TERMINAL_PROMPT=0 git push
 | 现象 | 原因 / 处理 |
 | --- | --- |
 | Playwright 报 `Executable doesn't exist … chromium_headless_shell` | 本机只装了 `chromium-1217`，脚本已支持 `QF_CHROME` 环境变量指定 chrome 路径 |
+| 控制台报 `<rect> attribute width: A negative value is not valid` | 时间轴用 tick 比例算宽度，上游把 tick 算到 0 以下就会画出负矩形。`advance()` 必须对 dt 与结果都做下界钳制，`posOf()` 再加一层 [0, W]。用 `scripts/find_bad_rect.py` 定位（rAF 采样 + 打印祖先链），别靠读代码猜 |
 | 截图里大片空白但卡片高度正常 | 同级最高的卡把行撑高，内容都堆在顶部。让最容易空的一块 `flex: 1`（子单队列、成交回报流、综合分轨迹都这么处理），别再加大 `gap` |
 | 数字出现 `-0.0` | `fmtSigned` 已处理四舍五入为 0 的情况；新增格式化函数时要一并考虑 |
 | 改一个参数后页面卡顿 | 重算走 90ms 尾随防抖，`scheduleRecompute` 不要改成立即执行；测试里用 `rebuild()` 同步重建 |
