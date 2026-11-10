@@ -47,6 +47,15 @@ npm run preview             # 预览 dist/，默认 4173（端口被占会自动
 npm test                    # 期望：2 files / 40 tests 全绿，约 7s
 ```
 
+Windows 用户可双击根目录 `start-dev.cmd`（纯 ASCII 内容，`%~dp0` 自定位，
+不依赖工作目录；缺 `node_modules` 时自动 `npm ci`）。
+
+> **服务必须在用户自己的终端里起。** 由 AI 助手后台代起的 dev server 会在该轮
+> 对话结束时被回收，表现为「链接刚才还好好的、现在 502」。这不是项目故障：
+> 排查时先 `curl --noproxy '*'` 直接探端口，通了就说明只是进程没了，重起即可。
+> 注意本机存在 `http_proxy`，不带 `--noproxy '*'` 的探活会被代理接管并返回 502，
+> 很容易误判成服务崩了。
+
 更新日志里的实测数据（改动 UI 后请重新测量，不要照抄）：
 `dist/index-*.js ≈ 328 KB（gzip ≈ 104 KB）`、`css ≈ 29 KB（gzip ≈ 6 KB）`，
 `tsc` 与 `vite build` 均无警告。
@@ -171,6 +180,8 @@ GIT_SSL_NO_VERIFY=1 GIT_TERMINAL_PROMPT=0 git push
 | 用 `npm run xxx` 在 Bash 工具里跑不起来 | 直接调 `node node_modules/<pkg>/bin/<cli>`，例如 `node node_modules/vitest/vitest.mjs run` |
 | `git status` 报一堆 ` M` 但内容没变 | `core.autocrlf` 的 stat 假阳性，以 `git diff --numstat` 为准 |
 | 预览端口不是 4178 | `vite preview` 端口被占会自动 +1，读输出里的 `Local:` 地址再传给截图脚本 |
+| 链接刚才还能开，几分钟后 502 | 后台代起的 dev server 被回收，不是代码问题。先 `curl --noproxy '*'` 直连端口确认，再让用户在自己终端 `npm run dev` 或双击 `start-dev.cmd` |
+| `curl http://127.0.0.1:xxxx` 恒返回 502 | 本机有 `http_proxy`，请求被代理接管。探本地端口一律加 `--noproxy '*'`，否则一定会误判 |
 
 ---
 
