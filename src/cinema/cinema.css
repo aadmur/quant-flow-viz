@@ -1,0 +1,37 @@
+/* === 电影舞台：全屏实景、镜头推进、纸张飞行与白光转场 === */
+.cinema { position: fixed; inset: 0; overflow: hidden; background: #07100f; color: #f3ead7; font-family: var(--font-sans); }
+.cinema-street, .cinema-hall { position: absolute; inset: -6%; background-position: center 48%; background-size: cover; will-change: transform, opacity; }
+.cinema-street { background-image: url('/assets/wall-street.webp'); transform-origin: 51% 46%; }
+.cinema-hall { background-image: url('/assets/exchange-hall.webp'); }
+.cinema-vignette { position: absolute; inset: 0; background: radial-gradient(circle at 52% 44%, transparent 22%, rgba(2,8,8,.16) 56%, rgba(1,5,5,.82) 115%), linear-gradient(90deg, rgba(3,10,10,.5), transparent 35%, transparent 72%, rgba(2,8,8,.35)); pointer-events: none; }
+.cinema-grain { position: absolute; inset: -50%; opacity: .12; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); animation: grain .35s steps(2) infinite; }
+@keyframes grain { 0% { transform: translate(0,0) } 25% { transform: translate(3%,-2%) } 50% { transform: translate(-2%,3%) } 75% { transform: translate(2%,2%) } }
+.cinema-ghost { position: absolute; top: 0; bottom: 0; width: 16%; background: linear-gradient(90deg, rgba(3,9,9,.55), transparent); pointer-events: none; }
+.cinema-door-glow { position: absolute; z-index: 12; left: 51%; top: 77%; width: 17vw; height: 27vh; transform: translate(-50%,-50%); pointer-events: none; background: radial-gradient(58% 50% at 50% 62%, rgba(255,250,232,.9), rgba(255,232,182,.38) 45%, rgba(255,214,150,.1) 70%, transparent 88%); mix-blend-mode: screen; filter: blur(20px); }
+.cinema-ghost-left { left: 0; }.cinema-ghost-right { right: 0; transform: scaleX(-1); }
+.cinema-title { position: absolute; left: 8vw; top: 17vh; z-index: 40; }
+.cinema-title > span, .cinema-paper-story > span, .cinema-enter-title > span { font: 600 11px/1 var(--font-mono); letter-spacing: .28em; color: #d4b879; }
+.cinema-title h1 { margin: 22px 0 26px; font: 500 clamp(72px, 10vw, 156px)/.78 var(--font-display); letter-spacing: -.055em; text-shadow: 0 4px 40px rgba(0,0,0,.3); }
+.cinema-title p { margin: 0; padding-left: 18px; border-left: 1px solid #c8a86a; font-size: 15px; line-height: 1.9; letter-spacing: .12em; color: rgba(246,237,218,.82); }
+.cinema-paper-story { position: absolute; z-index: 40; top: 13vh; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; }
+.cinema-paper-story strong { display: block; margin-top: 16px; font: 400 clamp(25px, 3vw, 44px)/1.3 var(--font-display); letter-spacing: .08em; }
+.cinema-enter-title { position: absolute; z-index: 40; left: 50%; top: 44%; transform: translate(-50%,-50%); width: 100%; text-align: center; }
+.cinema-enter-title strong { display: block; margin-top: 20px; font: 400 clamp(36px, 4.8vw, 72px)/1.28 var(--font-display); letter-spacing: .04em; text-shadow: 0 3px 24px #07100f; }
+.paper-flight { position: absolute; inset: 0; z-index: 25; pointer-events: none; perspective: 900px; }
+.flying-certificate { position: absolute; width: 154px; height: 88px; padding: 10px; box-sizing: border-box; color: #20332d; background: #e9dbb8; border: 1px solid #b99d64; outline: 1px solid rgba(49,62,46,.45); outline-offset: -6px; box-shadow: 0 14px 30px rgba(0,0,0,.28); text-align: center; transform-origin: center; will-change: transform; }
+.flying-certificate::before, .flying-certificate::after { content: ''; position: absolute; inset: 4px; border-top: 1px solid #8c754c; border-bottom: 1px solid #8c754c; pointer-events: none; }
+.flying-certificate::after { inset: 10px 5px; border: 0; border-left: 1px solid #8c754c; border-right: 1px solid #8c754c; }
+.flying-certificate span { display: block; font: 600 6px/1 var(--font-mono); letter-spacing: .2em; }
+.flying-certificate b { display: block; margin-top: 7px; font: 700 22px/.9 var(--font-display); letter-spacing: .04em; }
+.flying-certificate em { display: block; margin-top: 4px; font: 500 7px/1 var(--font-mono); letter-spacing: .28em; }
+.flying-certificate i { display: block; margin-top: 7px; font: normal 6px/1 var(--font-mono); }
+.wind-lines { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+.wind-lines i { position: absolute; left: 10%; width: 42%; height: 1px; background: linear-gradient(90deg, transparent, rgba(234,223,192,.48), transparent); transform: rotate(-18deg); animation: wind 1.25s ease-in-out infinite; }
+@keyframes wind { from { transform: translateX(-40%) rotate(-18deg) scaleX(.3); opacity: 0; } 45% { opacity: 1; } to { transform: translateX(120%) rotate(-18deg) scaleX(1.2); opacity: 0; } }
+.cinema-flash { position: absolute; inset: 0; z-index: 80; background: #fffdf4; pointer-events: none; }
+.cinema-skip { position: absolute; z-index: 100; top: 28px; right: 34px; padding: 10px 0 10px 16px; border: 0; border-bottom: 1px solid rgba(239,226,198,.38); background: transparent; color: rgba(246,237,218,.84); font: 500 11px/1 var(--font-sans); letter-spacing: .12em; cursor: pointer; }
+.cinema-skip span { margin-left: 14px; color: #d6b875; }.cinema-skip:hover { color: white; border-color: #d6b875; }
+.cinema-footer { position: absolute; z-index: 100; bottom: 28px; left: 34px; right: 34px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; font: 500 9px/1 var(--font-mono); letter-spacing: .18em; color: rgba(237,225,199,.62); }
+.cinema-progress { height: 1px; background: rgba(240,225,195,.2); }.cinema-progress i { display: block; height: 1px; background: #d3b476; }
+@media (max-width: 700px) { .cinema-title { left: 8vw; top: 22vh; }.cinema-title h1 { font-size: 22vw; }.flying-certificate { width: 112px; height: 68px; }.flying-certificate b { font-size: 16px; }.cinema-footer > span:first-child { display: none; }.cinema-footer { grid-template-columns: 1fr auto; }.cinema-paper-story { top: 18vh; }.cinema-paper-story strong { white-space: normal; width: 80vw; } }
+@media (prefers-reduced-motion: reduce) { .cinema-grain, .wind-lines i { animation: none; } }
