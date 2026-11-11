@@ -1,10 +1,14 @@
-"""视觉回归：把关键交互状态各拍一张，并统计控制台错误。
+"""视觉回归：把开场与三课的关键状态各拍一张，并统计控制台错误。
 
 用法：
     python scripts/shot.py shots http://127.0.0.1:4178/
+
+出场顺序与 CinematicIntro 的时间轴对齐（总长 11.8s）：
+    p=0.10 街头标题 / p=0.47 纸质凭证飞散 / p=0.78 穿入交易所 / 之后闪白进教学
 """
 import os
 import sys
+import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -19,14 +23,40 @@ CHROME = os.environ.get(
 )
 
 
-def set_explode(page, value: float) -> None:
+def drag_slider(page, label: str, ratio: float) -> None:
+    """把指定的纸质凭证滑块拖到 0..1 的相对位置（走原生 setter，保证 React 收到 input）。"""
     page.eval_on_selector(
-        "#explode",
+        f'input[aria-label="{label}"]',
         "(el, v) => { const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-        " s.call(el, String(v)); el.dispatchEvent(new Event('input',{bubbles:true})); }",
-        value,
+        # min/max 是字符串，必须先转数字，否则 '20' + 8 会拼成 '208' 再被浏览器钳到最大值
+        " const lo = parseFloat(el.min), hi = parseFloat(el.max);"
+        " s.call(el, String(lo + (hi - lo) * v)); el.dispatchEvent(new Event('input',{bubbles:true})); }",
+        ratio,
     )
-    page.wait_for_timeout(620)
+    page.wait_for_timeout(360)
+
+
+def wait_for_progress(page, target: float, tol: float = 0.02, timeout: int = 20000) -> None:
+    """等开场进度条走到 target（0..1）再截图。
+
+    固定 sleep 会漂：截图本身要几百毫秒，而闪白只占 0.03 的进度，
+    稍晚一点就拍到 p≈0.88 那层 rgba(255,253,244,.78) 的白雾。
+    这里用 Python 轮询而不是 wait_for_function——后者在页面重载后偶发不返回。
+    """
+    deadline = time.time() + timeout / 1000
+    while time.time() < deadline:
+        ratio = page.evaluate(
+            "() => { const el = document.querySelector('.cinema-progress i');"
+            " if (!el) return null;"
+            " const total = el.parentElement.getBoundingClientRect().width;"
+            " const w = el.getBoundingClientRect().width;"
+            " return total > 0 ? w / total : null; }"
+        )
+        if ratio is None:      # 开场已经结束，按钮都撤了
+            return
+        if ratio >= target - tol:
+            return
+        page.wait_for_timeout(50)
 
 
 def main() -> None:
@@ -38,47 +68,67 @@ def main() -> None:
         page.on("pageerror", lambda e: errors.append(str(e)))
 
         page.goto(URL, wait_until="networkidle")
-        page.wait_for_timeout(1400)
 
-        # 01 默认播放态
-        page.screenshot(path=str(OUT / "01-overview.png"))
-
-        # 02 中段定格：各零件同步到同一 tick
-        page.keyboard.press("Space")
-        box = page.locator(".tl-track").bounding_box()
-        page.mouse.click(box["x"] + box["width"] * 0.46, box["y"] + box["height"] / 2)
+        # 开场三帧各自独立加载，并且按进度条取帧（闪白只占 0.03 进度，晚一拍就整幅发白）
+        # 01 街头：标题 + 纵深
         page.wait_for_timeout(700)
-        page.screenshot(path=str(OUT / "02-mid-timeline.png"))
+        wait_for_progress(page, 0.1)
+        page.screenshot(path=str(OUT / "01-intro-street.png"))
+        # 02 纸质凭证被风卷起（p≈0.50，弧线最高处）
+        page.reload(wait_until="networkidle")
+        wait_for_progress(page, 0.5)
+        page.screenshot(path=str(OUT / "02-intro-papers.png"))
+        # 03 穿入交易所（p≈0.76，闪白之前）
+        page.reload(wait_until="networkidle")
+        wait_for_progress(page, 0.76)
+        page.screenshot(path=str(OUT / "03-intro-hall.png"))
 
-        # 03 全拆解：结构视图
-        set_explode(page, 1.0)
-        page.screenshot(path=str(OUT / "03-exploded.png"))
-        set_explode(page, 0.42)
-
-        # 04 点开 M5：零件抽离 + 右栏明细
-        page.locator('[data-phase="m5"]').first.click()
+        # 04 第一课：大单冲击（默认参数）
+        page.reload(wait_until="networkidle")
+        page.locator(".academy").wait_for(timeout=20000)
         page.wait_for_timeout(700)
-        page.screenshot(path=str(OUT / "04-detail-impact.png"))
-        page.keyboard.press("Escape")
+        page.screenshot(path=str(OUT / "04-lesson-impact.png"), full_page=True)
+
+        # 教学页比视口高是常态：任何一层给 body 加了 overflow:hidden 都会让底部讲解滚不到，
+        # 而 full_page 截图照样完整——所以必须单独探一次能不能滚。
+        scroll_ok = page.evaluate(
+            "() => { const y0 = window.scrollY; window.scrollBy(0, 240);"
+            " const moved = window.scrollY > y0; window.scrollTo(0, 0); return moved; }"
+        )
+        print("SCROLL_OK:", scroll_ok)
+
+        # 05 同一课换参数：拆成多笔 + 薄盘口
+        drag_slider(page, "市场深度", 0.1)
+        page.get_by_role("button", name="拆成多笔").click()
         page.wait_for_timeout(400)
+        page.screenshot(path=str(OUT / "05-lesson-split.png"), full_page=True)
 
-        # 05 压力测试预设
-        page.locator('.presets button:has-text("压力测试")').click()
-        page.wait_for_timeout(1200)
-        page.screenshot(path=str(OUT / "05-stress.png"))
+        # 06 第二课：量化足迹
+        page.get_by_role("button", name="02 量化足迹").click()
+        page.wait_for_timeout(360)
+        page.screenshot(path=str(OUT / "06-lesson-quant.png"), full_page=True)
 
-        # 06 注入异常：看下游是不是真的降级
-        page.locator('[data-phase="e3"]').first.click()
-        page.wait_for_timeout(500)
-        page.locator('.inject-grid button:has-text("网关断线")').click()
-        page.wait_for_timeout(900)
-        page.screenshot(path=str(OUT / "06-incident.png"))
-        page.keyboard.press("Escape")
+        # 07 第三课：量价关系（拖到缩量上涨，验证四象限会换）
+        page.get_by_role("button", name="03 量价关系").click()
+        page.wait_for_timeout(300)
+        drag_slider(page, "成交量倍率", 0.05)
+        page.screenshot(path=str(OUT / "07-lesson-volume.png"), full_page=True)
 
-        # 07 窄屏
+        # 08 窄屏
         page.set_viewport_size({"width": 1180, "height": 940})
         page.wait_for_timeout(600)
-        page.screenshot(path=str(OUT / "07-narrow.png"))
+        page.screenshot(path=str(OUT / "08-narrow.png"), full_page=True)
+
+        # 09 手机屏
+        page.set_viewport_size({"width": 720, "height": 900})
+        page.wait_for_timeout(600)
+        page.screenshot(path=str(OUT / "09-mobile.png"), full_page=True)
+
+        # 10 窄屏开场：容易被忽略，标题和凭证不能溢出
+        page.set_viewport_size({"width": 1180, "height": 940})
+        page.get_by_role("button", name="重播华尔街开场").click()
+        wait_for_progress(page, 0.5)
+        page.screenshot(path=str(OUT / "10-intro-narrow.png"))
 
         print("CONSOLE_ERRORS:", len(errors))
         for e in errors[:12]:
